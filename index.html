@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">城北祭 - 公式サイト</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* --- ダークベース CSS設定 --- */
+        :root{--bg-dark:#0d1117;--surface:#161b22;--c-cyan:#00e5ff;--c-pink:#ff4081;--c-yellow:#ffd600;--c-green:#00e676;--text-main:#e6edf3;--text-light:#8b949e;--border-color:#30363d;--shadow:0 4px 15px rgba(0,0,0,0.5);}
+        body{margin:0;background-color:var(--bg-dark);background-image:radial-gradient(rgba(255,255,255,0.05) 1px,transparent 1px);background-size:20px 20px;color:var(--text-main);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;min-height:100vh;scroll-behavior:smooth;}
+        
+        /* ロード画面 */
+        #loader{position:fixed;inset:0;background:#050505;z-index:9999;display:flex;justify-content:center;align-items:center;transition:opacity 0.8s ease-out,visibility 0.8s;overflow:hidden;}
+        .loader-ring{position:absolute;width:50px;height:50px;border-radius:50%;border:4px solid #fff;box-shadow:0 0 40px var(--c-cyan),inset 0 0 40px var(--c-pink);opacity:0;animation:ringExpand 1.5s cubic-bezier(0.1,0.8,0.3,1) forwards;}
+        .loader-text{font-size:clamp(2rem,8vw,4rem);font-weight:900;color:#fff;white-space:nowrap;animation:flashGlow 2s cubic-bezier(0.1,0.8,0.3,1) forwards;position:relative;z-index:2;}
+        @keyframes ringExpand{0%{transform:scale(0);opacity:1;border-width:20px;}100%{transform:scale(25);opacity:0;border-width:0;}}
+        @keyframes flashGlow{0%{transform:scale(0.8);opacity:0;text-shadow:0 0 0px var(--c-cyan);letter-spacing:0px;}30%{transform:scale(1.1);opacity:1;text-shadow:0 0 30px var(--c-cyan),0 0 60px var(--c-pink),0 0 100px #fff;letter-spacing:15px;}100%{transform:scale(1);opacity:1;text-shadow:0 0 15px var(--c-cyan),0 0 30px var(--c-pink);letter-spacing:10px;}}
+        
+        /* 共通セクション */
+        section{max-width:1100px;margin:0 auto;padding:70px 20px;}
+        .section-title{font-size:2rem;margin-bottom:30px;color:var(--text-main);font-weight:900;display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid var(--c-cyan);padding-bottom:5px;}
+        .btn-toggle{background:transparent;border:1px solid var(--border-color);color:var(--text-light);padding:5px 15px;border-radius:20px;cursor:pointer;font-weight:bold;transition:0.2s;font-size:0.9rem;}
+        .btn-toggle:hover{border-color:var(--c-cyan);color:var(--c-cyan);}
+        
+        /* ヘッダー・メニュー */
+        header{position:fixed;top:0;width:100%;z-index:100;background:rgba(22,27,34,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-color);box-shadow:var(--shadow);}
+        .header-inner{display:flex;justify-content:space-between;align-items:center;padding:15px 30px;}
+        .logo{font-size:1.5rem;font-weight:900;color:var(--c-cyan);letter-spacing:1px;}
+        .ticker-wrap{width:100%;overflow:hidden;background:#000;display:flex;align-items:center;height:35px;border-top:1px solid var(--border-color);}
+        .ticker-content{display:inline-block;white-space:nowrap;font-weight:700;font-size:0.9rem;color:var(--c-yellow);padding-left:100vw;animation:ticker 25s linear infinite;}
+        @keyframes ticker{0%{transform:translate3d(0,0,0);}100%{transform:translate3d(-100%,0,0);}}
+        .menu-btn{display:flex;flex-direction:column;justify-content:space-between;width:30px;height:22px;cursor:pointer;z-index:110;}
+        .menu-btn span{display:block;height:3px;width:100%;background:var(--text-main);transition:0.3s;border-radius:2px;}
+        .menu-btn.open span{background:var(--c-pink);}
+        .menu-btn.open span:nth-child(1){transform:translateY(9.5px) rotate(45deg);}
+        .menu-btn.open span:nth-child(2){opacity:0;}
+        .menu-btn.open span:nth-child(3){transform:translateY(-9.5px) rotate(-45deg);}
+        .menu-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);z-index:104;opacity:0;transition:0.3s;}
+        .menu-backdrop.active{display:block;opacity:1;}
+        #side-menu{position:fixed;top:0;right:-400px;width:350px;max-width:100vw;height:100vh;background:var(--surface);color:var(--text-main);z-index:105;transition:0.4s cubic-bezier(0.25,0.8,0.25,1);display:flex;flex-direction:column;padding:100px 40px 40px;box-sizing:border-box;border-left:1px solid var(--border-color);}
+        #side-menu.active{right:0;}
+        #side-menu ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:20px;}
+        #side-menu a{text-decoration:none;color:var(--text-main);font-size:1.3rem;font-weight:900;transition:0.2s;display:block;border-bottom:1px solid var(--border-color);padding-bottom:10px;}
+        #side-menu a:hover{color:var(--c-cyan);padding-left:10px;}
+        .menu-links{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:15px;}
+        .menu-links a{font-size:1rem;color:var(--text-light);border:none;padding:0;}
+        .menu-links a:hover{color:var(--c-pink);padding-left:0;}
+        #pageTopBtn{position:fixed;bottom:30px;right:30px;width:50px;height:50px;background:var(--c-cyan);color:#000;font-weight:900;font-size:1.2rem;border:none;border-radius:50%;cursor:pointer;box-shadow:0 4px 15px rgba(0,229,255,0.5);z-index:99;opacity:0;visibility:hidden;transition:0.3s;}
+        #pageTopBtn.show{opacity:1;visibility:visible;}
+        #pageTopBtn:hover{transform:translateY(-5px);background:#fff;}
+        
+        /* ヒーローセクション */
+        .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;padding-top:80px;padding-bottom:40px;background:radial-gradient(circle at center,rgba(0,229,255,0.05) 0%,transparent 70%);}
+        .main-title{font-size:clamp(3rem,10vw,6rem);margin:0;line-height:1.1;font-weight:900;letter-spacing:5px;color:var(--text-main);text-shadow:0 0 20px rgba(0,229,255,0.4);}
+        .sub-title{font-size:1.5rem;font-weight:900;color:var(--c-pink);margin-top:10px;letter-spacing:2px;}
+        .countdown{display:flex;gap:15px;margin-top:30px;background:rgba(22,27,34,0.6);border:1px solid var(--border-color);padding:15px 25px;border-radius:12px;backdrop-filter:blur(5px);}
+        .cd-item{display:flex;flex-direction:column;align-items:center;min-width:50px;}
+        .cd-num{font-size:2.2rem;font-weight:900;color:var(--c-cyan);line-height:1;}
+        .cd-label{font-size:0.8rem;font-weight:700;color:var(--text-light);margin-top:5px;}
+        .quick-links{display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin-top:40px;max-width:800px;}
+        .quick-links a{text-decoration:none;color:var(--text-main);font-weight:700;font-size:0.95rem;background:var(--surface);border:1px solid var(--border-color);padding:12px 20px;border-radius:30px;transition:0.2s;box-shadow:var(--shadow);}
+        .quick-links a:hover{border-color:var(--c-cyan);color:var(--c-cyan);transform:translateY(-2px);}
+        
+        /* 特大広告(昨年優勝など) */
+        #featured-ad-container{display:none;margin-top:40px;width:100%;max-width:800px;padding:0 20px;box-sizing:border-box;}
+        .featured-card{background:var(--surface);padding:30px;border-radius:16px;border:2px solid var(--c-yellow);box-shadow:0 0 35px rgba(255,214,0,0.4);position:relative;overflow:hidden;display:flex;gap:20px;align-items:center;flex-wrap:wrap;transition:0.3s;}
+        .featured-card:hover{transform:translateY(-5px);box-shadow:0 0 45px rgba(255,214,0,0.6);}
+        .featured-badge{position:absolute;top:0;right:0;background:var(--c-yellow);color:#000;font-weight:900;padding:8px 25px;border-bottom-left-radius:16px;font-size:1rem;letter-spacing:2px;box-shadow:-2px 2px 10px rgba(0,0,0,0.5);}
+        .featured-icon{width:120px;height:120px;border-radius:12px;object-fit:cover;border:4px solid var(--c-yellow);}
+        .featured-info{flex:1;min-width:250px;text-align:left;}
+        .featured-info h3{margin:0 0 10px 0;color:var(--text-main);font-size:1.8rem;font-weight:900;}
+        .featured-info p{margin:0 0 15px 0;color:var(--text-light);font-size:1rem;line-height:1.5;font-weight:700;}
+        
+        /* お知らせ */
+        .news-box{background:var(--surface);border-radius:12px;padding:20px;max-height:250px;overflow-y:auto;box-shadow:var(--shadow);border:1px solid var(--border-color);}
+        .news-item{padding:15px;border-bottom:1px solid var(--border-color);display:flex;flex-direction:column;gap:5px;}
+        .news-item:last-child{border-bottom:none;}
+        .news-date{font-size:0.85rem;color:var(--c-pink);font-weight:700;}
+        .news-text{font-size:0.95rem;font-weight:700;line-height:1.5;color:var(--text-main);}
+        
+        /* タブ共通 */
+        .tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+        .tab-btn{background:var(--bg-dark);border:1px solid var(--border-color);padding:10px 20px;border-radius:30px;font-weight:700;cursor:pointer;transition:0.2s;color:var(--text-light);}
+        .tab-btn.active{background:var(--c-cyan);color:#000;border-color:var(--c-cyan);}
+        
+        /* スケジュール */
+        .sch-list{display:none;flex-direction:column;gap:15px;}
+        .sch-list.active{display:flex;}
+        .sch-item{display:flex;align-items:center;background:var(--surface);padding:20px;border-radius:12px;border-left:5px solid var(--c-pink);box-shadow:var(--shadow);transition:0.2s;border:1px solid var(--border-color);border-left-width:5px;}
+        .sch-time{font-weight:900;font-size:1.2rem;color:var(--c-cyan);width:80px;flex-shrink:0;}
+        .sch-info{flex:1;}
+        .sch-title{font-size:1.1rem;font-weight:900;margin:0 0 5px 0;color:var(--text-main);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+        .sch-desc{font-size:0.85rem;color:var(--text-light);margin:0;font-weight:700;}
+        
+        .status-tag{font-weight:900;padding:4px 10px;border-radius:4px;font-size:0.8rem;color:#fff;display:inline-block;}
+        .status-scheduled{background:#1976d2;}
+        .status-playing{background:#d32f2f;animation:pulse 1.5s infinite;}
+        .status-cancelled{background:#616161;text-decoration:line-through;}
+        .status-finished{background:#388e3c;}
+        @keyframes pulse{0%{opacity:1;}50%{opacity:0.5;}100%{opacity:1;}}
+        
+        /* 食堂・キッチンカー */
+        .cafe-menu-box{background:var(--surface);border-radius:12px;border:1px solid var(--border-color);overflow:hidden;box-shadow:var(--shadow);}
+        .cafe-row{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:1px solid var(--border-color);transition:background 0.2s;}
+        .cafe-row:last-child{border-bottom:none;}
+        .cafe-row:hover{background:rgba(255,255,255,0.03);}
+        .cafe-name{font-size:1.1rem;font-weight:900;color:var(--text-main);}
+        .cafe-price{font-size:1.2rem;font-weight:900;color:var(--c-yellow);}
+        .kcar-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}
+        .kcar-grid.active{display:grid;}
+        .kcar-card{background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border-color);display:flex;flex-direction:column;transition:0.2s;}
+        .kcar-card:hover{transform:translateY(-5px);border-color:var(--c-pink);}
+        .kcar-img{width:100%;height:180px;object-fit:cover;background:var(--bg-dark);}
+        .kcar-info{padding:15px;flex:1;display:flex;flex-direction:column;}
+        .kcar-title{font-size:1.2rem;font-weight:900;margin:0 0 10px 0;color:var(--text-main);}
+        .kcar-desc{font-size:0.9rem;color:var(--text-light);margin:0;font-weight:700;line-height:1.4;}
+        
+        /* 企画グリッド (途切れないように高さを拡張) */
+        .controls-top{display:flex;flex-wrap:wrap;gap:15px;margin-bottom:20px;}
+        .search-input{flex:1;min-width:200px;padding:12px 15px;background:var(--surface);border:1px solid var(--border-color);border-radius:8px;font-size:1rem;color:var(--text-main);outline:none;transition:0.2s;}
+        .search-input:focus{border-color:var(--c-cyan);}
+        #search-content{transition:max-height 0.6s ease-out;overflow:hidden;max-height:50000px;}
+        #search-content.collapsed{max-height:0 !important;}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:25px;}
+        .card{background:var(--surface);padding:25px;border-radius:12px;display:flex;flex-direction:column;box-shadow:var(--shadow);border:2px solid var(--border-color);transition:0.2s;position:relative;}
+        .card:hover{border-color:var(--c-cyan);transform:translateY(-3px);}
+        .card-icon{position:absolute;top:20px;right:20px;width:55px;height:55px;border-radius:8px;object-fit:cover;border:2px solid var(--border-color);background:var(--bg-dark);}
+        .card-header{display:flex;justify-content:flex-start;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:10px;padding-right:60px;}
+        .group-tag{font-weight:900;color:#000;background:var(--c-cyan);padding:4px 10px;border-radius:4px;font-size:0.8rem;}
+        .type-tag{font-weight:900;padding:4px 10px;border-radius:4px;font-size:0.8rem;border:1px solid currentColor;}
+        .type-exp{color:var(--c-pink);}
+        .type-exh{color:var(--c-yellow);}
+        .type-food{color:var(--c-green);}
+        .type-food_car{color:#ff9100;}
+        .card h3{font-size:1.3rem;margin:0 0 5px 0;font-weight:900;color:var(--text-main);}
+        .card p.short-desc{color:var(--text-light);font-size:0.9rem;line-height:1.5;margin:0 0 20px 0;flex:1;font-weight:700;}
+        .card-actions{display:flex;gap:10px;width:100%;}
+        .details-btn,.vote-btn{flex:1;padding:12px;border:2px solid var(--border-color);border-radius:8px;font-weight:900;cursor:pointer;transition:0.2s;font-size:0.95rem;text-align:center;}
+        .details-btn{background:var(--surface);color:var(--text-main);}
+        .details-btn:hover{border-color:var(--c-cyan);color:var(--c-cyan);}
+        .vote-btn{background:transparent;color:var(--text-light);}
+        .vote-btn:hover{border-color:var(--c-pink);color:var(--c-pink);}
+        .vote-btn.voted{background:var(--c-pink);border-color:var(--c-pink);color:#fff;box-shadow:0 0 15px rgba(255,64,129,0.4);}
+        
+        /* 校内図・アクセス */
+        .map-img-container{background:var(--surface);border-radius:12px;border:1px solid var(--border-color);padding:20px;text-align:center;box-shadow:var(--shadow);}
+        .map-img-placeholder{width:100%;height:400px;background:rgba(0,0,0,0.5);border:2px dashed var(--border-color);display:flex;justify-content:center;align-items:center;color:var(--text-light);font-weight:700;border-radius:8px;}
+        .access-container{display:flex;flex-wrap:wrap;background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border-color);}
+        .access-info{flex:1;min-width:300px;padding:40px;display:flex;flex-direction:column;justify-content:center;}
+        .route-search{display:flex;margin-top:20px;gap:10px;}
+        .route-search input{flex:1;padding:12px;background:var(--bg-dark);border:1px solid var(--border-color);color:var(--text-main);border-radius:8px;font-weight:bold;}
+        .route-search button{padding:12px 20px;background:var(--c-cyan);color:#000;border:none;border-radius:8px;font-weight:bold;cursor:pointer;}
+        .map-frame{flex:1.5;min-width:300px;min-height:350px;background:#333;}
+        .map-frame iframe{width:100%;height:100%;border:none;filter:invert(90%) hue-rotate(180deg);}
+        
+        /* モーダル共通 */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);z-index:2000;justify-content:center;align-items:center;padding:10px;}
+        .modal-content{background:var(--surface);color:var(--text-main);width:100%;max-width:800px;padding:30px;border-radius:12px;position:relative;max-height:90vh;overflow-y:auto;border:1px solid var(--border-color);box-shadow:0 10px 40px rgba(0,0,0,0.8);box-sizing:border-box;}
+        .close-modal{position:absolute;top:15px;right:20px;font-size:2rem;cursor:pointer;color:var(--text-light);font-weight:bold;line-height:1;}
+        
+        /* 詳細モーダル */
+        .modal-icon-wrap{text-align:center;margin-bottom:20px;}
+        .modal-large-icon{width:150px;height:150px;border-radius:12px;object-fit:cover;border:4px solid var(--c-cyan);box-shadow:0 0 20px rgba(0,229,255,0.3);}
+        .modal-full-text{font-size:1rem;color:var(--text-main);line-height:1.8;font-weight:500;background:var(--bg-dark);padding:20px;border-radius:8px;border:1px solid var(--border-color);white-space:pre-wrap;text-align:left;}
+        
+        /* 委員紹介 */
+        .comm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;margin-top:20px;}
+        .comm-card{background:var(--bg-dark);padding:20px;border-radius:8px;border:1px solid var(--border-color);}
+        .comm-card h4{margin:0 0 5px;color:var(--c-pink);font-size:1.1rem;}
+        .comm-card .name{font-weight:900;font-size:1.2rem;margin:0 0 10px;color:var(--c-cyan);}
+        .comm-card p{margin:0;font-size:0.85rem;color:var(--text-light);line-height:1.4;font-weight:700;}
+        
+        /* 管理画面 */
+        .admin-section{background:var(--bg-dark);padding:20px;margin-bottom:20px;border-radius:8px;border:1px solid var(--border-color);}
+        .admin-h4{color:var(--c-cyan);margin:0 0 15px 0;font-size:1.1rem;border-bottom:1px solid var(--border-color);padding-bottom:10px;}
+        .admin-input,.admin-textarea,.admin-select{width:100%;padding:10px;background:var(--surface);border:1px solid var(--border-color);color:var(--text-main);margin-bottom:10px;border-radius:4px;box-sizing:border-box;font-family:inherit;font-weight:700;}
+        .admin-textarea{resize:vertical;min-height:100px;}
+        .btn-action{width:100%;padding:12px;border:none;border-radius:4px;cursor:pointer;font-weight:bold;color:#000;background:var(--c-cyan);margin-bottom:5px;transition:0.2s;}
+        .btn-action:hover{opacity:0.8;}
+        .btn-danger{background:#e53935;color:#fff;}
+        .btn-outline{background:transparent;border:2px solid var(--text-light);color:var(--text-light);margin-bottom:10px;}
+        .btn-outline:hover{background:var(--text-light);color:#000;}
+        .admin-flex{display:flex;gap:10px;align-items:center;}
+        .btn-sm{padding:6px 12px;font-size:0.8rem;border:none;border-radius:4px;cursor:pointer;color:#fff;margin-left:5px;}
+        .list-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border-color);background:var(--surface);border-radius:4px;margin-bottom:5px;}
+        .list-row:last-child{border-bottom:none;}
+        .rank-item{display:flex;justify-content:space-between;padding:10px;background:var(--surface);margin-bottom:5px;border-radius:4px;font-weight:bold;border:1px solid var(--border-color);}
+        
+        /* トースト・フッター・隠し設定ボタン */
+        .toast{position:fixed;bottom:-100px;right:20px;background:var(--c-cyan);color:#000;padding:15px 25px;border-radius:8px;font-weight:bold;z-index:9999;transition:0.4s;box-shadow:0 5px 20px rgba(0,229,255,0.3);}
+        .toast.show{bottom:20px;}
+        footer{text-align:center;padding:40px;color:var(--text-light);font-size:0.9rem;border-top:1px solid var(--border-color);margin-top:50px;background:var(--surface);font-weight:700;}
+        .admin-link{color:var(--text-light);opacity:0.05;text-decoration:none;cursor:pointer;margin-top:10px;display:inline-block;font-size:0.8rem;padding:10px;transition:0.3s;}
+        .admin-link:hover{opacity:0.3;}
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="loader-ring"></div><div class="loader-text" id="loaderTitle">城北祭</div></div>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo" id="headerLogo">城北祭 85th</div>
+            <div class="menu-btn" id="menuBtn" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ticker-wrap"><div class="ticker-content" id="tickerText">ロード中...</div></div>
+    </header>
+
+    <div class="menu-backdrop" id="menuBackdrop" onclick="toggleMenu()"></div>
+    <nav id="side-menu">
+        <ul>
+            <li><a href="#schedule" onclick="toggleMenu()">スケジュール</a></li>
+            <li><a href="#food" onclick="toggleMenu()">食堂・キッチンカー</a></li>
+            <li><a href="#search" onclick="toggleMenu()">企画一覧</a></li>
+            <li><a href="#campus-map" onclick="toggleMenu()">校内図</a></li>
+            <li><a href="#access" onclick="toggleMenu()">アクセス</a></li>
+            <li><a href="#" onclick="openCommittee(); toggleMenu();" style="color:var(--c-pink);">実行委員紹介</a></li>
+        </ul>
+        <div class="menu-links">
+            <a href="https://www.johoku.ac.jp/" target="_blank">城北学園 公式サイト</a>
+            <a href="https://www.youtube.com/@JohokuBunjitsu/featured" target="_blank">公式YouTubeチャンネル</a>
+        </div>
+    </nav>
+
+    <button id="pageTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
+    <div id="toast" class="toast"><span id="toastMsg">通知</span></div>
+
+    <section id="top" class="hero">
+        <h1 class="main-title" id="heroTitle">城北祭</h1>
+        <div class="sub-title" id="heroSub">第85回</div>
+        <div class="countdown">
+            <div class="cd-item"><span class="cd-num" id="cd-d">00</span><span class="cd-label">日</span></div>
+            <div class="cd-item"><span class="cd-num" id="cd-h">00</span><span class="cd-label">時間</span></div>
+            <div class="cd-item"><span class="cd-num" id="cd-m">00</span><span class="cd-label">分</span></div>
+            <div class="cd-item"><span class="cd-num" id="cd-s">00</span><span class="cd-label">秒</span></div>
+        </div>
+        
+        <div id="featured-ad-container"></div>
+        
+        <div class="quick-links">
+            <a href="#schedule">スケジュール</a>
+            <a href="#food">食堂・キッチンカー</a>
+            <a href="#search">企画一覧</a>
+            <a href="#campus-map">校内図</a>
+            <a href="#access">アクセス</a>
+        </div>
+    </section>
+
+    <section id="news">
+        <h2 class="section-title">お知らせ</h2>
+        <div class="news-box" id="newsContainer"></div>
+    </section>
+
+    <section id="schedule">
+        <h2 class="section-title">スケジュール</h2>
+        <div class="tabs" id="scheduleTabs"></div>
+        <div id="scheduleContents"></div>
+    </section>
+
+    <section id="food">
+        <h2 class="section-title">食堂・キッチンカー</h2>
+        <div class="tabs">
+            <button class="tab-btn active" id="btn-cafe" onclick="switchFoodTab('cafe')">学食メニュー</button>
+            <button class="tab-btn" id="btn-kcar" onclick="switchFoodTab('kcar')">キッチンカー</button>
+        </div>
+        <div id="food-cafe" class="sch-list active"><div class="cafe-menu-box" id="cafeMenuContainer"></div></div>
+        <div id="food-kcar" class="kcar-grid"></div>
+    </section>
+
+    <section id="search">
+        <h2 class="section-title">
+            企画一覧
+            <button class="btn-toggle" id="toggleSearchBtn" onclick="toggleSection('search-content', 'toggleSearchBtn')">▼ 折りたたむ</button>
+        </h2>
+        <div id="search-content">
+            <div class="controls-top">
+                <input type="text" id="searchInput" class="search-input" placeholder="キーワードで検索...">
+            </div>
+            
+            <div class="tabs" style="margin-top: 10px; background: rgba(22, 27, 34, 0.5); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                    <span style="color:var(--text-light); font-weight:bold; font-size:0.9rem; min-width: 60px;">ジャンル:</span>
+                    <button class="tab-btn active btn-filter" onclick="filterData('all', this)">すべて</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('exp', this)">アトラクション</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('exh', this)">展示・公演</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('food', this)">食品</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('food_car', this)">キッチンカー</button>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                    <span style="color:var(--text-light); font-weight:bold; font-size:0.9rem; min-width: 60px;">場所(棟):</span>
+                    <button class="tab-btn btn-filter" onclick="filterData('chugaku', this)">中学棟</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('kyoutu', this)">共通棟</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('koukou', this)">高校棟</button>
+                    <button class="tab-btn btn-filter" onclick="filterData('other', this)">その他</button>
+                </div>
+            </div>
+
+            <p style="color:var(--c-pink); font-size:0.85rem; font-weight:bold; margin-top:15px;">※ 投票は全企画の中で1人1回のみ可能です。</p>
+            <div class="grid" id="cardGrid"></div>
+        </div>
+    </section>
+
+    <section id="campus-map">
+        <h2 class="section-title">校内図</h2>
+        <div class="map-img-container">
+            <div class="map-img-placeholder">校内図 画像プレースホルダー<br>(imgタグに差し替えて使用)</div>
+        </div>
+    </section>
+
+    <section id="access">
+        <h2 class="section-title">アクセス</h2>
+        <div class="access-container">
+            <div class="access-info">
+                <h3 style="margin:0 0 10px; font-size:1.5rem; color:var(--text-main);">城北中学校・高等学校</h3>
+                <p style="color:var(--text-light); font-size:0.9rem; margin-bottom: 20px; font-weight:700;">東京都板橋区東新町2-28-1<br>東武東上線「上板橋駅」南口 徒歩10分</p>
+                <div style="background:var(--bg-dark); padding:15px; border-radius:8px; border:1px solid var(--border-color);">
+                    <p style="margin:0 0 10px 0; font-weight:bold; font-size:0.9rem; color:var(--text-main);">Googleマップでルート検索</p>
+                    <div class="route-search">
+                        <input type="text" id="startLocation" placeholder="行き先 (例: 池袋駅)">
+                        <button onclick="searchRoute()">検索</button>
+                    </div>
+                </div>
+            </div>
+            <div class="map-frame">
+                <iframe src="https://maps.google.co.jp/maps?output=embed&q=城北中学校・高等学校" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p id="footerText">© 2026 Johoku School Festival.</p>
+        <span class="admin-link" onclick="openAdmin()">Admin</span>
+    </footer>
+
+    <div id="committeeModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('committeeModal')">×</span>
+            <h2 style="margin-top:0; color:var(--c-cyan);" id="commTitle">実行委員会 紹介</h2>
+            <div class="comm-grid" id="committeeGrid"></div>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="closeModal('detailsModal')">×</span>
+            <div class="modal-icon-wrap"><img src="" id="detailIcon" class="modal-large-icon" alt="アイコン" onerror="this.style.display='none'"></div>
+            <div style="text-align:center; margin-bottom:15px;">
+                <span id="detailGroup" class="group-tag"></span>
+                <span id="detailFolder" style="color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; margin-left: 10px;"></span>
+                <span id="detailType" class="type-tag" style="margin-left:10px;"></span>
+                <span id="detailStatus" style="display:none; margin-left:10px;"></span>
+            </div>
+            <h2 id="detailTitle" style="text-align:center; margin:0 0 5px 0; color:var(--c-cyan);"></h2>
+            <p id="detailPlace" style="text-align:center; margin:0 0 20px 0; color:var(--text-light); font-weight:bold;"></p>
+            <div id="detailFullText" class="modal-full-text"></div>
+            <button class="btn-action" style="margin-top:20px;" onclick="closeModal('detailsModal')">閉じる</button>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAdmin()">×</span>
+            <h2 style="margin-top:0; color:var(--c-cyan);">設定・管理パネル</h2>
+            
+            <div id="adminLogin">
+                <input type="password" id="passInput" class="admin-input" placeholder="パスワード">
+                <button onclick="login()" class="btn-action">ログイン</button>
+            </div>
+
+            <div id="adminPanel" style="display: none;">
+                
+                <div class="admin-section">
+                    <h4 class="admin-h4">基本設定 (タイトル・日時・パスワード)</h4>
+                    <input type="text" id="adminFestName" class="admin-input" placeholder="テーマ名 (例: 城北祭)">
+                    <input type="text" id="adminFestNum" class="admin-input" placeholder="数字 (例: 85)">
+                    <input type="datetime-local" id="adminDate" class="admin-input">
+                    <button onclick="saveBaseInfo()" class="btn-action">基本情報を保存</button>
+                    <hr style="margin:15px 0; border:0; border-top:1px dashed var(--border-color);">
+                    <input type="password" id="adminNewPass" class="admin-input" placeholder="新しいパスワードを設定">
+                    <button onclick="changePassword()" class="btn-action" style="background:#555; color:#fff;">パスワードを変更</button>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">🎨 棟（フォルダー）の色設定</h4>
+                    <div class="admin-flex">
+                        <label style="color:var(--text-main); flex:1;">中学棟</label>
+                        <input type="color" id="colorChugaku" class="admin-input" style="flex:2; height:40px; padding:0;">
+                    </div>
+                    <div class="admin-flex">
+                        <label style="color:var(--text-main); flex:1;">共通棟</label>
+                        <input type="color" id="colorKyoutu" class="admin-input" style="flex:2; height:40px; padding:0;">
+                    </div>
+                    <div class="admin-flex">
+                        <label style="color:var(--text-main); flex:1;">高校棟</label>
+                        <input type="color" id="colorKoukou" class="admin-input" style="flex:2; height:40px; padding:0;">
+                    </div>
+                    <div class="admin-flex">
+                        <label style="color:var(--text-main); flex:1;">その他</label>
+                        <input type="color" id="colorOther" class="admin-input" style="flex:2; height:40px; padding:0;">
+                    </div>
+                    <button onclick="saveFolderColors()" class="btn-action" style="background:var(--c-yellow); color:#000;">色を保存・反映</button>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4" style="color:var(--c-yellow);">👑 特大広告(昨年優勝団体) 設定</h4>
+                    <select id="featuredSelect" class="admin-select"><option value="">-- 非表示 --</option></select>
+                    <button class="btn-action" onclick="saveFeaturedAd()" style="background:var(--c-yellow); color:#000;">広告を設定する</button>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">リアルタイム投票状況 (管理者のみ)</h4>
+                    <div id="adminRanking" style="max-height: 150px; overflow-y: auto;"></div>
+                    <button onclick="resetAllVotes()" class="btn-action btn-danger" style="margin-top: 15px;">全投票数をリセット (0票に戻す)</button>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">📍 スケジュール場所（タブ）の管理</h4>
+                    <div id="adminLocList" style="margin-bottom: 10px; max-height: 150px; overflow-y: auto;"></div>
+                    <div class="admin-flex">
+                        <input type="text" id="adminNewLocName" class="admin-input" placeholder="新しい場所の名前 (例: 体育館)" style="margin-bottom:0; flex:1;">
+                        <button class="btn-action btn-sm" onclick="addLocation()" style="margin-bottom:0; width:auto;">場所を追加</button>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">スケジュールの追加・編集</h4>
+                    <button class="btn-action btn-outline" onclick="clearSchForm()">＋ 新規追加 (クリア)</button>
+                    <div style="margin-bottom:10px;">表示絞り込み: <select id="adminSchLocFilter" class="admin-select" style="width:auto; display:inline-block;" onchange="updateAdminLists()"></select></div>
+                    <div style="background:var(--surface); padding:10px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-color);">
+                        <input type="hidden" id="schEditId">
+                        <div class="admin-flex" style="margin-bottom: 10px;">
+                            <select id="schPlace" class="admin-select" style="flex:1; margin-bottom:0;"></select>
+                            <input type="time" id="schTime" class="admin-input" style="flex:1; margin-bottom:0;">
+                            <select id="schStatus" class="admin-select" style="flex:1; margin-bottom:0;">
+                                <option value="none">ステータスなし</option>
+                                <option value="scheduled">公演予定</option>
+                                <option value="playing">公演中</option>
+                                <option value="finished">公演済み</option>
+                                <option value="cancelled">公演中止</option>
+                            </select>
+                        </div>
+                        <input type="text" id="schTitle" class="admin-input" placeholder="タイトル">
+                        <input type="text" id="schDesc" class="admin-input" placeholder="説明">
+                        <button onclick="saveSchedule()" class="btn-action" style="background:var(--c-pink); color:#fff;">予定を保存</button>
+                    </div>
+                    <div id="adminSchList" style="max-height: 150px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">企画・出店の追加・編集</h4>
+                    <button class="btn-action btn-outline" onclick="clearEventForm()">＋ 新規追加 (クリア)</button>
+                    <div style="background:var(--surface); padding:10px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-color);">
+                        <input type="hidden" id="eventEditId">
+                        <input type="text" id="eventGroup" class="admin-input" placeholder="団体名">
+                        <input type="text" id="eventTitle" class="admin-input" placeholder="企画名">
+                        
+                        <div class="admin-flex">
+                            <select id="eventFolder" class="admin-select" style="flex:1;">
+                                <option value="chugaku">中学棟</option>
+                                <option value="kyoutu">共通棟</option>
+                                <option value="koukou">高校棟</option>
+                                <option value="other">その他</option>
+                            </select>
+                            <input type="text" id="eventPlace" class="admin-input" placeholder="具体的な場所 (例: 1F 視聴覚室)" style="flex:2; margin-bottom:0;">
+                        </div>
+
+                        <div class="admin-flex" style="margin-top:10px;">
+                            <select id="eventType" class="admin-select" style="flex:1;"><option value="exp">アトラクション</option><option value="exh">展示・公演</option><option value="food">食品</option><option value="food_car">キッチンカー</option></select>
+                            <select id="eventStatus" class="admin-select" style="flex:1;"><option value="none">ステータスなし</option><option value="scheduled">公演予定</option><option value="playing">公演中</option><option value="finished">公演済み</option><option value="cancelled">公演中止</option></select>
+                        </div>
+                        <input type="text" id="eventIcon" class="admin-input" placeholder="画像URL (詳細画面用)">
+                        <input type="text" id="eventDesc" class="admin-input" placeholder="短い紹介文 (一覧用)">
+                        <textarea id="eventFullText" class="admin-textarea" placeholder="詳細文 (モーダル用)"></textarea>
+                        <button onclick="saveEvent()" class="btn-action" style="background:var(--c-pink); color:#fff;">企画を保存</button>
+                    </div>
+                    <div id="adminEventList" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4" style="color:var(--c-yellow);">食堂メニューの追加・編集</h4>
+                    <button class="btn-action btn-outline" onclick="clearCafeForm()">＋ 新規追加 (クリア)</button>
+                    <div style="background:var(--surface); padding:10px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-color);">
+                        <input type="hidden" id="cafeEditId">
+                        <input type="text" id="cafeName" class="admin-input" placeholder="商品名 (例: カツカレー)">
+                        <input type="text" id="cafePrice" class="admin-input" placeholder="値段 (例: 450円)">
+                        <button onclick="saveCafe()" class="btn-action" style="background:var(--c-yellow); color:#000;">メニューを保存</button>
+                    </div>
+                    <div id="adminCafeList" style="max-height: 150px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4" style="color:var(--c-yellow);">キッチンカーの追加・編集</h4>
+                    <button class="btn-action btn-outline" onclick="clearKCarForm()">＋ 新規追加 (クリア)</button>
+                    <div style="background:var(--surface); padding:10px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-color);">
+                        <input type="hidden" id="kcarEditId">
+                        <input type="text" id="kcarName" class="admin-input" placeholder="店舗名・品名 (例: 絶品クレープ)">
+                        <input type="text" id="kcarDesc" class="admin-input" placeholder="説明や価格帯 (例: チョコバナナ 500円～)">
+                        <input type="text" id="kcarImg" class="admin-input" placeholder="画像URL (例: https://...)">
+                        <button onclick="saveKCar()" class="btn-action" style="background:var(--c-yellow); color:#000;">店舗を保存</button>
+                    </div>
+                    <div id="adminKCarList" style="max-height: 150px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">お知らせ投稿機能</h4>
+                    <textarea id="adminNewsText" class="admin-input" rows="2" placeholder="お知らせの内容"></textarea>
+                    <div style="margin-bottom:10px; font-size:0.9rem; color:var(--text-light);">
+                        <label><input type="checkbox" id="checkTicker" checked> テロップ(上部)に流す</label><br>
+                        <label><input type="checkbox" id="checkList" checked> お知らせ欄に表示する</label>
+                    </div>
+                    <button onclick="postNews()" class="btn-action">投稿する</button>
+                    <button onclick="clearNews()" class="btn-action btn-danger">全てのお知らせを削除</button>
+                </div>
+
+                <div class="admin-section">
+                    <h4 class="admin-h4">実行委員紹介の追加・編集</h4>
+                    <button class="btn-action btn-outline" onclick="clearCommForm()">＋ 新規追加 (クリア)</button>
+                    <div style="background:var(--surface); padding:10px; border-radius:4px; margin-bottom:10px; border:1px solid var(--border-color);">
+                        <input type="hidden" id="commEditId">
+                        <input type="text" id="commRole" class="admin-input" placeholder="肩書き (例: 委員長)">
+                        <input type="text" id="commName" class="admin-input" placeholder="名前 (例: 高2 山田)">
+                        <textarea id="commMsg" class="admin-input" rows="2" placeholder="メッセージ"></textarea>
+                        <button onclick="saveCommittee()" class="btn-action" style="background:var(--c-pink); color:#fff;">委員を保存</button>
+                    </div>
+                    <div id="adminCommList" style="max-height: 150px; overflow-y: auto;"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === 初期設定 & データキー ===
+        const V = 'v25_stealth_admin'; 
+        const DB_KEY = `johoku_data_${V}`;
+        const SCH_KEY = `johoku_sch_${V}`;
+        const NEWS_KEY = `johoku_news_${V}`;
+        const INFO_KEY = `johoku_info_${V}`;
+        const COMM_KEY = `johoku_comm_${V}`;
+        const PASS_KEY = `johoku_pass_${V}`;
+        const VOTE_LOG_KEY = `johoku_myvote_${V}`;
+        const CAFE_KEY = `johoku_cafe_${V}`;
+        const KCAR_KEY = `johoku_kcar_${V}`;
+        const LOC_KEY = `johoku_loc_${V}`;
+        const FEAT_KEY = `johoku_feat_${V}`;
+        const FOLDER_KEY = `johoku_folder_colors_${V}`;
+
+        // === 自動生成ロジック ===
+        function generateClassData() {
+            let autoEvents = []; let eid = 1;
+            for(let g=1; g<=3; g++) { for(let c=0; c<7; c++) { let cls = String.fromCharCode(65 + c); autoEvents.push({ id: `ev_${eid++}`, group: `中${g}-${cls}`, title: `中${g}${cls}の展示企画`, desc: `工夫を凝らした展示です。`, type: 'exh', votes: Math.floor(Math.random()*30), folder: 'chugaku', place: `中学棟 ${g}階` }); } }
+            for(let g=1; g<=3; g++) { for(let c=0; c<9; c++) { let cls = String.fromCharCode(65 + c); let type = (g===3 && c%2===0)?'food':'exp'; autoEvents.push({ id: `ev_${eid++}`, group: `高${g}-${cls}`, title: `高${g}${cls} 企画`, desc: `高校生ならではのクオリティをお楽しみください。`, type: type, votes: Math.floor(Math.random()*100), folder: 'koukou', place: `高校棟 ${g}階` }); } }
+            return autoEvents;
+        }
+
+        window.onload = () => { setTimeout(() => { document.getElementById('loader').style.opacity = '0'; setTimeout(() => document.getElementById('loader').style.display = 'none', 800); }, 1800); applyBaseInfo(); };
+
+        window.onscroll = function() {
+            const btn = document.getElementById("pageTopBtn");
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) { btn.classList.add("show"); } else { btn.classList.remove("show"); }
+        };
+
+        // === データ初期化 ===
+        let eventData = JSON.parse(localStorage.getItem(DB_KEY)) || generateClassData();
+        eventData.forEach(e => { if(!e.folder) e.folder = 'other'; if(!e.place) e.place = ''; });
+
+        let locationsData = JSON.parse(localStorage.getItem(LOC_KEY)) || [{id: 'hall', name: '講堂'}, {id: 'ground', name: 'グラウンド'}, {id: 'multi', name: '多目的'}];
+        let scheduleData = JSON.parse(localStorage.getItem(SCH_KEY)) || [{ id: 's1', place: 'hall', time: '10:00', title: '開会式', desc: '全校生徒集合', status: 'playing' }];
+        let newsData = JSON.parse(localStorage.getItem(NEWS_KEY)) || [{ id: 1, text: "第85回 城北祭へようこそ！", isTicker: true, isList: true, date: "2026/09/01" }];
+        let commData = JSON.parse(localStorage.getItem(COMM_KEY)) || [{ id: 'c1', role: '実行委員長', name: '高2 山田 太郎', msg: '最高の思い出にしましょう！' }];
+        let baseInfo = JSON.parse(localStorage.getItem(INFO_KEY)) || { name: '城北祭', num: '85', date: '2026-09-16T09:00:00' };
+        let cafeData = JSON.parse(localStorage.getItem(CAFE_KEY)) || [ { id: 'cf1', name: '名物 城北カツカレー', price: '450円' }, { id: 'cf2', name: '醤油ラーメン', price: '380円' } ];
+        let kcarData = JSON.parse(localStorage.getItem(KCAR_KEY)) || [ { id: 'kc1', name: 'Smile Crepe', desc: 'チョコバナナ、イチゴなど 500円～', img: 'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=500&q=80' } ];
+        let featuredAdId = localStorage.getItem(FEAT_KEY) || null;
+        let myVote = localStorage.getItem(VOTE_LOG_KEY) || null;
+
+        let folderColors = JSON.parse(localStorage.getItem(FOLDER_KEY)) || { 'chugaku': '#1976d2', 'kyoutu': '#388e3c', 'koukou': '#d32f2f', 'other': '#616161' };
+        const folderLabels = { 'chugaku': '中学棟', 'kyoutu': '共通棟', 'koukou': '高校棟', 'other': 'その他' };
+
+        // === UI 反映・トグル系 ===
+        function applyBaseInfo() { document.title = `${baseInfo.name} - 公式サイト`; document.getElementById('loaderTitle').innerText = `第${baseInfo.num}回 ${baseInfo.name}`; document.getElementById('headerLogo').innerText = `${baseInfo.name} ${baseInfo.num}th`; document.getElementById('heroTitle').innerText = baseInfo.name; document.getElementById('heroSub').innerText = `第${baseInfo.num}回`; document.getElementById('commTitle').innerText = `第${baseInfo.num}回 実行委員会`; document.getElementById('footerText').innerText = `© 2026 ${baseInfo.name} 実行委員会`; }
+        function toggleMenu() { document.getElementById('menuBtn').classList.toggle('open'); document.getElementById('side-menu').classList.toggle('active'); document.getElementById('menuBackdrop').classList.toggle('active'); }
+        function toggleSection(id, btnId) { const el = document.getElementById(id); const btn = document.getElementById(btnId); el.classList.toggle('collapsed'); if(el.classList.contains('collapsed')) { btn.innerText = '▶ 展開する'; } else { btn.innerText = '▼ 折りたたむ'; } }
+        function openCommittee() { renderCommittee(); document.getElementById('committeeModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function openDetails(id) {
+            const item = eventData.find(e => e.id === id); if(!item) return;
+            document.getElementById('detailGroup').innerText = item.group;
+            
+            const df = document.getElementById('detailFolder');
+            df.innerText = folderLabels[item.folder] || 'その他';
+            df.style.backgroundColor = folderColors[item.folder] || folderColors['other'];
+            
+            const dp = document.getElementById('detailPlace');
+            if(item.place) { dp.innerText = `📍 ${item.place}`; dp.style.display = 'block'; } else { dp.style.display = 'none'; }
+
+            document.getElementById('detailType').innerText = typeLabels[item.type] || '企画';
+            document.getElementById('detailType').className = `type-tag type-${item.type}`;
+            document.getElementById('detailTitle').innerText = item.title;
+            document.getElementById('detailFullText').innerText = item.fullText || item.desc || '詳細情報はありません。';
+            const icon = document.getElementById('detailIcon');
+            if(item.icon) { icon.src = item.icon; icon.style.display = 'inline-block'; } else { icon.style.display = 'none'; }
+            
+            const st = document.getElementById('detailStatus');
+            if(item.status && item.status !== 'none') {
+                st.style.display = 'inline-block'; st.className = `status-tag status-${item.status}`;
+                if(item.status === 'scheduled') st.innerText = '公演予定'; if(item.status === 'playing') st.innerText = '公演中'; if(item.status === 'finished') st.innerText = '公演済み'; if(item.status === 'cancelled') st.innerText = '公演中止';
+            } else { st.style.display = 'none'; }
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        setInterval(() => {
+            const diff = new Date(baseInfo.date).getTime() - new Date().getTime();
+            if (diff > 0) {
+                document.getElementById('cd-d').innerText = Math.floor(diff / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+                document.getElementById('cd-h').innerText = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+                document.getElementById('cd-m').innerText = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                document.getElementById('cd-s').innerText = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+            }
+        }, 1000);
+
+        function renderNews() {
+            const tickers = newsData.filter(n => n.isTicker).map(n => n.text).join('　／　'); document.getElementById('tickerText').innerText = tickers || "お知らせはありません。";
+            const container = document.getElementById('newsContainer'); container.innerHTML = ''; const listItems = newsData.filter(n => n.isList).reverse();
+            if(listItems.length === 0) { container.innerHTML = '<p style="color:var(--text-light);">お知らせはありません。</p>'; return; }
+            listItems.forEach(n => { container.insertAdjacentHTML('beforeend', `<div class="news-item"><span class="news-date">${n.date}</span><span class="news-text">${n.text}</span></div>`); });
+        }
+
+        function switchTab(placeId, btnEl) { 
+            document.querySelectorAll('#scheduleTabs .tab-btn').forEach(b => b.classList.remove('active')); 
+            btnEl.classList.add('active'); 
+            document.querySelectorAll('#scheduleContents .sch-list').forEach(l => l.classList.remove('active')); 
+            const target = document.getElementById(`sch-${placeId}`);
+            if(target) target.classList.add('active'); 
+        }
+        
+        function renderSchedule() {
+            const tabsContainer = document.getElementById('scheduleTabs');
+            const contentsContainer = document.getElementById('scheduleContents');
+            const schPlaceSelect = document.getElementById('schPlace');
+            const adminLocFilter = document.getElementById('adminSchLocFilter');
+            const adminLocList = document.getElementById('adminLocList');
+            
+            tabsContainer.innerHTML = ''; contentsContainer.innerHTML = ''; 
+            if(schPlaceSelect) schPlaceSelect.innerHTML = '';
+            if(adminLocFilter) adminLocFilter.innerHTML = '<option value="all">すべて</option>';
+            if(adminLocList) adminLocList.innerHTML = '';
+
+            locationsData.forEach((loc, index) => {
+                const isActive = index === 0 ? 'active' : '';
+                tabsContainer.insertAdjacentHTML('beforeend', `<button class="tab-btn ${isActive}" onclick="switchTab('${loc.id}', this)">${loc.name}</button>`);
+                contentsContainer.insertAdjacentHTML('beforeend', `<div id="sch-${loc.id}" class="sch-list ${isActive}"></div>`);
+                
+                if(schPlaceSelect) schPlaceSelect.insertAdjacentHTML('beforeend', `<option value="${loc.id}">${loc.name}</option>`);
+                if(adminLocFilter) adminLocFilter.insertAdjacentHTML('beforeend', `<option value="${loc.id}">${loc.name}</option>`);
+                if(adminLocList) adminLocList.insertAdjacentHTML('beforeend', `<div class="list-row"><div>${loc.name}</div><button class="btn-sm btn-danger" onclick="delLocation('${loc.id}')">削除</button></div>`);
+            });
+
+            locationsData.forEach(loc => {
+                const container = document.getElementById(`sch-${loc.id}`);
+                if(!container) return;
+                const items = scheduleData.filter(s => s.place === loc.id).sort((a,b) => a.time.localeCompare(b.time));
+                
+                if(items.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:var(--text-light); font-weight:bold; padding: 20px;">予定はありません</p>';
+                    return;
+                }
+                items.forEach(s => {
+                    let statusHtml = '';
+                    if (s.status && s.status !== 'none') {
+                        let statusText = '';
+                        if(s.status === 'scheduled') statusText = '公演予定';
+                        if(s.status === 'playing') statusText = '公演中';
+                        if(s.status === 'finished') statusText = '公演済み';
+                        if(s.status === 'cancelled') statusText = '公演中止';
+                        statusHtml = `<span class="status-tag status-${s.status}" style="margin-left: 10px;">${statusText}</span>`;
+                    }
+                    container.insertAdjacentHTML('beforeend', `<div class="sch-item"><div class="sch-time">${s.time}</div><div class="sch-info"><h4 class="sch-title">${s.title} ${statusHtml}</h4><p class="sch-desc">${s.desc}</p></div></div>`); 
+                });
+            });
+        }
+
+        function addLocation() {
+            const nameInput = document.getElementById('adminNewLocName');
+            const name = nameInput.value.trim();
+            if(!name) return alert('新しい場所の名前を入力してください。');
+            const id = 'loc_' + Date.now();
+            locationsData.push({id, name});
+            localStorage.setItem(LOC_KEY, JSON.stringify(locationsData));
+            nameInput.value = '';
+            renderSchedule(); updateAdminLists(); showToast('場所を追加しました');
+        }
+
+        function delLocation(id) {
+            if(confirm('この場所を削除しますか？紐づくスケジュールも表示されなくなります。')) {
+                locationsData = locationsData.filter(loc => loc.id !== id);
+                localStorage.setItem(LOC_KEY, JSON.stringify(locationsData));
+                renderSchedule(); updateAdminLists(); showToast('場所を削除しました');
+            }
+        }
+
+        function switchFoodTab(type) {
+            document.getElementById('btn-cafe').classList.remove('active'); document.getElementById('btn-kcar').classList.remove('active');
+            document.getElementById('food-cafe').classList.remove('active'); document.getElementById('food-kcar').classList.remove('active');
+            if(type === 'cafe') { document.getElementById('btn-cafe').classList.add('active'); document.getElementById('food-cafe').classList.add('active'); } 
+            else { document.getElementById('btn-kcar').classList.add('active'); document.getElementById('food-kcar').classList.add('active'); }
+        }
+
+        function renderFood() {
+            const cList = document.getElementById('cafeMenuContainer'); cList.innerHTML = '';
+            if(cafeData.length===0) cList.innerHTML = '<p style="padding:20px; color:var(--text-light);">メニューが登録されていません</p>';
+            cafeData.forEach(c => cList.insertAdjacentHTML('beforeend', `<div class="cafe-row"><span class="cafe-name">${c.name}</span><span class="cafe-price">${c.price}</span></div>`));
+            
+            const kGrid = document.getElementById('food-kcar'); kGrid.innerHTML = '';
+            if(kcarData.length===0) kGrid.innerHTML = '<p style="grid-column:1/-1; color:var(--text-light); text-align:center;">出店情報がありません</p>';
+            kcarData.forEach(k => {
+                const imgTag = k.img ? `<img src="${k.img}" class="kcar-img" alt="${k.name}" onerror="this.style.display='none'">` : `<div class="kcar-img" style="display:flex;align-items:center;justify-content:center;color:#555;">No Image</div>`;
+                kGrid.insertAdjacentHTML('beforeend', `<div class="kcar-card">${imgTag}<div class="kcar-info"><h4 class="kcar-title">${k.name}</h4><p class="kcar-desc">${k.desc}</p></div></div>`);
+            });
+        }
+
+        function toggleVote(id) {
+            const idx = eventData.findIndex(e => e.id === id); if(idx === -1) return;
+            if (myVote === id) { myVote = null; eventData[idx].votes = Math.max(0, (eventData[idx].votes || 0) - 1); showToast('投票を取り消しました'); } else if (myVote !== null) { alert('投票は1人1回までです。先に現在の投票を取り消してください。'); return; } else { myVote = id; eventData[idx].votes = (eventData[idx].votes || 0) + 1; showToast('投票しました！'); }
+            localStorage.setItem(VOTE_LOG_KEY, myVote || ''); localStorage.setItem(DB_KEY, JSON.stringify(eventData)); renderCards(); renderRanking();
+        }
+
+        const typeLabels = { 'exp': 'アトラクション', 'exh': '展示・公演', 'food': '食品', 'food_car': 'キッチンカー' };
+        let currentFilter = 'all';
+
+        function renderCards() {
+            const grid = document.getElementById('cardGrid'); grid.innerHTML = ''; const kw = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = eventData.filter(item => { 
+                if(!(item.group.toLowerCase().includes(kw) || item.title.includes(kw))) return false; 
+                if(currentFilter !== 'all') {
+                    if(['exp', 'exh', 'food', 'food_car'].includes(currentFilter)) { return item.type === currentFilter; } 
+                    else if(['chugaku', 'kyoutu', 'koukou', 'other'].includes(currentFilter)) { return item.folder === currentFilter; }
+                }
+                return true; 
+            });
+
+            if(filtered.length === 0) { grid.innerHTML = '<p style="text-align:center; color:var(--text-light); font-weight:bold; grid-column:1/-1;">該当なし</p>'; return; }
+            
+            filtered.forEach(item => {
+                const isVoted = (myVote === item.id);
+                const label = typeLabels[item.type] || '企画';
+                let iconHtml = item.icon ? `<img src="${item.icon}" class="card-icon" onerror="this.style.display='none'">` : '';
+                let folderHtml = `<span style="background-color: ${folderColors[item.folder] || folderColors['other']}; color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; margin-right: 5px;">${folderLabels[item.folder] || 'その他'}</span>`;
+                let placeHtml = item.place ? `<p style="font-size:0.85rem; color:var(--text-light); margin:5px 0 10px 0; font-weight:bold;">📍 ${item.place}</p>` : '';
+
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="card" style="${isVoted ? 'border-color:var(--c-pink);' : ''}">
+                        ${iconHtml}
+                        <div class="card-header">
+                            <span class="group-tag">${item.group}</span>
+                            <span class="type-tag type-${item.type}">${label}</span>
+                        </div>
+                        <div style="margin-bottom:10px;">${folderHtml}</div>
+                        <h3>${item.title}</h3>
+                        ${placeHtml}
+                        <p class="short-desc">${item.desc}</p>
+                        <div class="card-actions">
+                            <button class="details-btn" onclick="openDetails('${item.id}')">詳細を見る</button>
+                            <button class="vote-btn ${isVoted?'voted':''}" onclick="toggleVote('${item.id}')">${isVoted ? '★ 投票済み' : '☆ 投票する'}</button>
+                        </div>
+                    </div>`);
+            });
+            renderFeaturedAd();
+        }
+
+        function filterData(type, btn) { currentFilter = type; document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); renderCards(); }
+        document.getElementById('searchInput').addEventListener('input', renderCards);
+
+        function renderFeaturedAd() {
+            const container = document.getElementById('featured-ad-container');
+            if(!featuredAdId) { container.style.display = 'none'; return; }
+            const item = eventData.find(e => e.id === featuredAdId);
+            if(!item) { container.style.display = 'none'; return; }
+            const iconHtml = item.icon ? `<img src="${item.icon}" class="featured-icon" onerror="this.style.display='none'">` : '';
+            container.innerHTML = `
+                <div class="featured-card">
+                    <div class="featured-badge">👑 昨年優勝団体</div>
+                    ${iconHtml}
+                    <div class="featured-info">
+                        <span class="group-tag" style="display:inline-block; margin-bottom:5px;">${item.group}</span>
+                        <h3>${item.title}</h3>
+                        <p>${item.desc}</p>
+                        <button class="btn-action" style="width:auto; padding:8px 30px; margin:0;" onclick="openDetails('${item.id}')">詳細を見る</button>
+                    </div>
+                </div>`;
+            container.style.display = 'block';
+        }
+
+        function renderCommittee() { const container = document.getElementById('committeeGrid'); container.innerHTML = ''; commData.forEach(c => { container.insertAdjacentHTML('beforeend', `<div class="comm-card"><h4>${c.role}</h4><div class="name">${c.name}</div><p>${c.msg}</p></div>`); }); }
+        function searchRoute() { const start = document.getElementById('startLocation').value; if(!start) return alert('行き先を入力してください'); const dest = encodeURIComponent('城北中学校・高等学校'); window.open(`http://maps.google.com/maps?saddr=${encodeURIComponent(start)}&daddr=${dest}`, '_blank'); }
+        function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toastMsg').innerText = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); }
+
+        function openAdmin() { document.getElementById('adminModal').style.display = 'flex'; document.getElementById('adminLogin').style.display = 'block'; document.getElementById('adminPanel').style.display = 'none'; document.getElementById('passInput').value = ''; }
+        function closeAdmin() { document.getElementById('adminModal').style.display = 'none'; }
+        
+        function login() { 
+            const pass = localStorage.getItem(PASS_KEY) || 'admin'; 
+            if(document.getElementById('passInput').value === pass) { 
+                document.getElementById('adminLogin').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; 
+                document.getElementById('adminFestName').value = baseInfo.name; document.getElementById('adminFestNum').value = baseInfo.num; 
+                const d = new Date(baseInfo.date); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); document.getElementById('adminDate').value = d.toISOString().slice(0,16); 
+                
+                document.getElementById('colorChugaku').value = folderColors.chugaku;
+                document.getElementById('colorKyoutu').value = folderColors.kyoutu;
+                document.getElementById('colorKoukou').value = folderColors.koukou;
+                document.getElementById('colorOther').value = folderColors.other;
+
+                renderRanking(); updateAdminLists(); populateFeaturedSelect();
+            } else { alert('パスワードが違います'); } 
+        }
+        
+        function saveBaseInfo() { baseInfo.name = document.getElementById('adminFestName').value || '城北祭'; baseInfo.num = document.getElementById('adminFestNum').value || '85'; baseInfo.date = document.getElementById('adminDate').value || baseInfo.date; localStorage.setItem(INFO_KEY, JSON.stringify(baseInfo)); applyBaseInfo(); showToast('基本情報を更新しました'); }
+        function changePassword() { const np = document.getElementById('adminNewPass').value; if(!np) return alert('入力してください'); localStorage.setItem(PASS_KEY, np); document.getElementById('adminNewPass').value = ''; showToast('パスワードを変更しました'); }
+        
+        function saveFolderColors() {
+            folderColors.chugaku = document.getElementById('colorChugaku').value;
+            folderColors.kyoutu = document.getElementById('colorKyoutu').value;
+            folderColors.koukou = document.getElementById('colorKoukou').value;
+            folderColors.other = document.getElementById('colorOther').value;
+            localStorage.setItem(FOLDER_KEY, JSON.stringify(folderColors));
+            renderCards(); showToast('棟の色設定を保存・反映しました');
+        }
+
+        function postNews() { const text = document.getElementById('adminNewsText').value; if(!text) return; const isTicker = document.getElementById('checkTicker').checked; const isList = document.getElementById('checkList').checked; const today = new Date(); const dateStr = `${today.getFullYear()}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getDate().toString().padStart(2,'0')}`; newsData.push({ id: Date.now(), text, isTicker, isList, date: dateStr }); localStorage.setItem(NEWS_KEY, JSON.stringify(newsData)); document.getElementById('adminNewsText').value = ''; renderNews(); showToast('お知らせを投稿しました'); }
+        function clearNews() { if(confirm('全て削除しますか？')) { newsData = []; localStorage.setItem(NEWS_KEY, JSON.stringify(newsData)); renderNews(); showToast('削除しました'); } }
+        function renderRanking() { const container = document.getElementById('adminRanking'); container.innerHTML = ''; const sorted = [...eventData].sort((a,b) => (b.votes||0) - (a.votes||0)).slice(0, 10); sorted.forEach((item, i) => { container.insertAdjacentHTML('beforeend', `<div class="rank-item"><span>${i+1}位: ${item.title}</span><span style="color:var(--c-pink);">${item.votes||0} 票</span></div>`); }); }
+        function resetAllVotes() { if(confirm('本当にすべての投票数をゼロにリセットしますか？')) { eventData.forEach(e => e.votes = 0); myVote = null; localStorage.setItem(DB_KEY, JSON.stringify(eventData)); localStorage.removeItem(VOTE_LOG_KEY); renderRanking(); renderCards(); showToast('リセットしました'); } }
+
+        function populateFeaturedSelect() {
+            const select = document.getElementById('featuredSelect'); select.innerHTML = '<option value="">-- 非表示 --</option>';
+            eventData.forEach(e => { select.insertAdjacentHTML('beforeend', `<option value="${e.id}" ${featuredAdId === e.id ? 'selected' : ''}>[${e.group}] ${e.title}</option>`); });
+        }
+        function saveFeaturedAd() { featuredAdId = document.getElementById('featuredSelect').value; localStorage.setItem(FEAT_KEY, featuredAdId); renderFeaturedAd(); showToast('特大広告を設定しました'); }
+
+        function updateAdminLists() {
+            const cl = document.getElementById('adminCommList'); cl.innerHTML = ''; commData.forEach(c => cl.insertAdjacentHTML('beforeend', `<div class="list-row"><div><b>${c.role}</b> ${c.name}</div><div><button class="btn-sm" style="background:#555;" onclick="editComm('${c.id}')">編集</button><button class="btn-sm btn-danger" onclick="delComm('${c.id}')">削除</button></div></div>`));
+            
+            const sl = document.getElementById('adminSchList'); sl.innerHTML = ''; 
+            const filterLoc = document.getElementById('adminSchLocFilter') ? document.getElementById('adminSchLocFilter').value : 'all';
+            scheduleData.filter(s => filterLoc === 'all' || s.place === filterLoc).sort((a,b)=>a.time.localeCompare(b.time)).forEach(s => {
+                const locObj = locationsData.find(l => l.id === s.place);
+                const locName = locObj ? locObj.name : '不明';
+                sl.insertAdjacentHTML('beforeend', `<div class="list-row"><div>[${locName}] ${s.time} - ${s.title}</div><div><button class="btn-sm" style="background:#555;" onclick="editSch('${s.id}')">編集</button><button class="btn-sm btn-danger" onclick="delSch('${s.id}')">削除</button></div></div>`);
+            });
+
+            const cafel = document.getElementById('adminCafeList'); cafel.innerHTML = ''; cafeData.forEach(c => cafel.insertAdjacentHTML('beforeend', `<div class="list-row"><div>${c.name} - ${c.price}</div><div><button class="btn-sm" style="background:#555;" onclick="editCafe('${c.id}')">編集</button><button class="btn-sm btn-danger" onclick="delCafe('${c.id}')">削除</button></div></div>`));
+            const kl = document.getElementById('adminKCarList'); kl.innerHTML = ''; kcarData.forEach(k => kl.insertAdjacentHTML('beforeend', `<div class="list-row"><div>${k.name}</div><div><button class="btn-sm" style="background:#555;" onclick="editKCar('${k.id}')">編集</button><button class="btn-sm btn-danger" onclick="delKCar('${k.id}')">削除</button></div></div>`));
+            const el = document.getElementById('adminEventList'); el.innerHTML = ''; eventData.forEach(e => el.insertAdjacentHTML('beforeend', `<div class="list-row"><div>[${e.group}] ${e.title}</div><div><button class="btn-sm" style="background:#555;" onclick="editEvent('${e.id}')">編集</button><button class="btn-sm btn-danger" onclick="delEvent('${e.id}')">削除</button></div></div>`));
+            
+            populateFeaturedSelect();
+        }
+
+        function clearCommForm() { document.getElementById('commEditId').value = ''; document.getElementById('commRole').value = ''; document.getElementById('commName').value = ''; document.getElementById('commMsg').value = ''; }
+        function saveCommittee() { 
+            const id = document.getElementById('commEditId').value || `c${Date.now()}`;
+            const role = document.getElementById('commRole').value; const name = document.getElementById('commName').value; const msg = document.getElementById('commMsg').value;
+            if(!role || !name) return alert('入力してください');
+            const idx = commData.findIndex(x => x.id === id);
+            if(idx !== -1) commData[idx] = {id, role, name, msg}; else commData.push({id, role, name, msg});
+            localStorage.setItem(COMM_KEY, JSON.stringify(commData)); clearCommForm(); updateAdminLists(); renderCommittee(); showToast('保存しました');
+        }
+        function editComm(id) { const c = commData.find(x => x.id === id); if(c){ document.getElementById('commEditId').value = c.id; document.getElementById('commRole').value = c.role; document.getElementById('commName').value = c.name; document.getElementById('commMsg').value = c.msg; } }
+        function delComm(id) { if(confirm('削除しますか？')){ commData = commData.filter(x => x.id !== id); localStorage.setItem(COMM_KEY, JSON.stringify(commData)); updateAdminLists(); renderCommittee(); showToast('削除しました'); } }
+
+        function clearSchForm() { document.getElementById('schEditId').value = ''; document.getElementById('schTime').value = ''; document.getElementById('schTitle').value = ''; document.getElementById('schDesc').value = ''; if(document.getElementById('schStatus')) document.getElementById('schStatus').value = 'none'; }
+        function saveSchedule() {
+            const id = document.getElementById('schEditId').value || `s${Date.now()}`;
+            const place = document.getElementById('schPlace').value; const time = document.getElementById('schTime').value; const title = document.getElementById('schTitle').value; const desc = document.getElementById('schDesc').value; const status = document.getElementById('schStatus') ? document.getElementById('schStatus').value : 'none';
+            if(!time || !title) return alert('入力してください');
+            const idx = scheduleData.findIndex(x => x.id === id);
+            if(idx !== -1) scheduleData[idx] = {id, place, time, title, desc, status}; else scheduleData.push({id, place, time, title, desc, status});
+            localStorage.setItem(SCH_KEY, JSON.stringify(scheduleData)); clearSchForm(); updateAdminLists(); renderSchedule(); showToast('保存しました');
+        }
+        function editSch(id) { const s = scheduleData.find(x => x.id === id); if(s){ document.getElementById('schEditId').value = s.id; document.getElementById('schPlace').value = s.place; document.getElementById('schTime').value = s.time; document.getElementById('schTitle').value = s.title; document.getElementById('schDesc').value = s.desc; if(document.getElementById('schStatus')) document.getElementById('schStatus').value = s.status || 'none'; } }
+        function delSch(id) { if(confirm('削除しますか？')){ scheduleData = scheduleData.filter(x => x.id !== id); localStorage.setItem(SCH_KEY, JSON.stringify(scheduleData)); updateAdminLists(); renderSchedule(); showToast('削除しました'); } }
+
+        function clearEventForm() { document.getElementById('eventEditId').value = ''; document.getElementById('eventGroup').value = ''; document.getElementById('eventTitle').value = ''; document.getElementById('eventIcon').value = ''; document.getElementById('eventDesc').value = ''; document.getElementById('eventFullText').value = ''; document.getElementById('eventFolder').value = 'other'; document.getElementById('eventPlace').value = ''; if(document.getElementById('eventStatus')) document.getElementById('eventStatus').value = 'none'; }
+        function saveEvent() {
+            const id = document.getElementById('eventEditId').value || `ev_${Date.now()}`;
+            const group = document.getElementById('eventGroup').value; const title = document.getElementById('eventTitle').value; const desc = document.getElementById('eventDesc').value; const type = document.getElementById('eventType').value; const fullText = document.getElementById('eventFullText').value; const icon = document.getElementById('eventIcon').value; 
+            const status = document.getElementById('eventStatus') ? document.getElementById('eventStatus').value : 'none';
+            const folder = document.getElementById('eventFolder').value;
+            const place = document.getElementById('eventPlace').value;
+
+            if(!group || !title) return alert('入力してください');
+            const idx = eventData.findIndex(x => x.id === id);
+            let votes = 0;
+            if(idx !== -1) { votes = eventData[idx].votes || 0; eventData[idx] = {id, group, title, desc, fullText, icon, status, type, folder, place, votes}; } else eventData.push({id, group, title, desc, fullText, icon, status, type, folder, place, votes:0});
+            localStorage.setItem(DB_KEY, JSON.stringify(eventData)); clearEventForm(); updateAdminLists(); renderCards(); renderRanking(); showToast('保存しました');
+        }
+        function editEvent(id) { const e = eventData.find(x => x.id === id); if(e){ document.getElementById('eventEditId').value = e.id; document.getElementById('eventGroup').value = e.group; document.getElementById('eventTitle').value = e.title; document.getElementById('eventDesc').value = e.desc; document.getElementById('eventType').value = e.type; document.getElementById('eventIcon').value = e.icon || ''; document.getElementById('eventFullText').value = e.fullText || ''; document.getElementById('eventFolder').value = e.folder || 'other'; document.getElementById('eventPlace').value = e.place || ''; if(document.getElementById('eventStatus')) document.getElementById('eventStatus').value = e.status || 'none'; } }
+        function delEvent(id) { if(confirm('削除しますか？')){ eventData = eventData.filter(x => x.id !== id); localStorage.setItem(DB_KEY, JSON.stringify(eventData)); updateAdminLists(); renderCards(); renderRanking(); showToast('削除しました'); } }
+
+        function clearCafeForm() { document.getElementById('cafeEditId').value = ''; document.getElementById('cafeName').value = ''; document.getElementById('cafePrice').value = ''; }
+        function saveCafe() {
+            const id = document.getElementById('cafeEditId').value || `cf${Date.now()}`;
+            const name = document.getElementById('cafeName').value; const price = document.getElementById('cafePrice').value;
+            if(!name || !price) return alert('入力してください');
+            const idx = cafeData.findIndex(x => x.id === id);
+            if(idx !== -1) cafeData[idx] = {id, name, price}; else cafeData.push({id, name, price});
+            localStorage.setItem(CAFE_KEY, JSON.stringify(cafeData)); clearCafeForm(); updateAdminLists(); renderFood(); showToast('保存しました');
+        }
+        function editCafe(id) { const c = cafeData.find(x => x.id === id); if(c){ document.getElementById('cafeEditId').value = c.id; document.getElementById('cafeName').value = c.name; document.getElementById('cafePrice').value = c.price; } }
+        function delCafe(id) { if(confirm('削除しますか？')){ cafeData = cafeData.filter(x => x.id !== id); localStorage.setItem(CAFE_KEY, JSON.stringify(cafeData)); updateAdminLists(); renderFood(); showToast('削除しました'); } }
+
+        function clearKCarForm() { document.getElementById('kcarEditId').value = ''; document.getElementById('kcarName').value = ''; document.getElementById('kcarDesc').value = ''; document.getElementById('kcarImg').value = ''; }
+        function saveKCar() {
+            const id = document.getElementById('kcarEditId').value || `kc${Date.now()}`;
+            const name = document.getElementById('kcarName').value; const desc = document.getElementById('kcarDesc').value; const img = document.getElementById('kcarImg').value;
+            if(!name) return alert('入力してください');
+            const idx = kcarData.findIndex(x => x.id === id);
+            if(idx !== -1) kcarData[idx] = {id, name, desc, img}; else kcarData.push({id, name, desc, img});
+            localStorage.setItem(KCAR_KEY, JSON.stringify(kcarData)); clearKCarForm(); updateAdminLists(); renderFood(); showToast('保存しました');
+        }
+        function editKCar(id) { const c = kcarData.find(x => x.id === id); if(c){ document.getElementById('kcarEditId').value = c.id; document.getElementById('kcarName').value = c.name; document.getElementById('kcarDesc').value = c.desc; document.getElementById('kcarImg').value = c.img; } }
+        function delKCar(id) { if(confirm('削除しますか？')){ kcarData = kcarData.filter(x => x.id !== id); localStorage.setItem(KCAR_KEY, JSON.stringify(kcarData)); updateAdminLists(); renderFood(); showToast('削除しました'); } }
+
+        // --- 初期描画の実行 ---
+        renderNews();
+        renderSchedule();
+        renderFood();
+        renderCards();
+
+    </script>
+</body>
+</html>
